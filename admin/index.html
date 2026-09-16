@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>تسجيل الدخول | لوحة تحكم معرض الحاج حماده نافع وزيري</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#061A2F">
+<link rel="icon" href="../assets/icons/favicon-32.png" sizes="32x32">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@700&family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="./admin.css">
+</head>
+<body class="admin-body">
+  <div class="login-screen">
+    <form class="login-card" id="login-form" novalidate>
+      <picture>
+        <source srcset="../assets/logo.webp" type="image/webp">
+        <img src="../assets/logo.png" alt="" width="72" height="72" loading="eager" decoding="async">
+      </picture>
+      <h1 class="login-title">لوحة التحكم</h1>
+      <p class="login-sub">تسجيل الدخول لإدارة أعمال المعرض</p>
+
+      <div class="field">
+        <label for="username">اسم المستخدم</label>
+        <input type="text" id="username" name="username" autocomplete="username" required>
+        <p class="field-error" id="username-error" hidden></p>
+      </div>
+      <div class="field">
+        <label for="password">كلمة المرور</label>
+        <input type="password" id="password" name="password" autocomplete="current-password" required>
+        <p class="field-error" id="password-error" hidden></p>
+      </div>
+
+      <button type="submit" class="btn btn-gold btn-block" id="login-submit">
+        <span id="login-submit-label">تسجيل الدخول</span>
+      </button>
+
+      <a href="../index.html" class="login-back">العودة إلى الموقع</a>
+    </form>
+  </div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/validation.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="./admin.js"></script>
+</body>
+</html>

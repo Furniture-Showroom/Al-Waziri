@@ -1,0 +1,236 @@
+/* =====================================================================
+   Admin styles — loaded together with ../css/style.css (shared tokens,
+   buttons, states, toast). This file only adds admin-specific layout.
+   ===================================================================== */
+
+body.admin-body {
+  background: #FBF8F0;
+  min-height: 100vh;
+}
+
+/* ---------------------------------------------------------------------
+   Login screen
+   --------------------------------------------------------------------- */
+.login-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-5);
+  background: radial-gradient(120% 140% at 50% 0%, var(--color-navy-3) 0%, var(--color-navy) 55%, var(--color-black) 100%);
+}
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--color-border-dark);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-7) var(--sp-5);
+  box-shadow: var(--shadow-md);
+  text-align: center;
+}
+.login-card img { width: 72px; height: 72px; border-radius: 50%; margin-inline: auto var(--sp-4); margin-bottom: var(--sp-4); }
+.login-title { font-family: var(--font-display); color: var(--color-cream); font-size: var(--fs-lg); margin-bottom: var(--sp-1); }
+.login-sub { color: var(--color-text-on-dark-muted); font-size: var(--fs-sm); margin-bottom: var(--sp-6); }
+.field { text-align: right; margin-bottom: var(--sp-4); }
+.field label { display: block; color: var(--color-text-on-dark-muted); font-size: var(--fs-xs); margin-bottom: var(--sp-2); font-weight: 700; }
+.field input,
+.field textarea,
+.field select {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--color-border-dark);
+  background: rgba(255,255,255,0.03);
+  color: var(--color-cream);
+  min-height: 48px;
+}
+.field input::placeholder, .field textarea::placeholder { color: #7C8794; }
+.field input:focus, .field textarea:focus, .field select:focus { border-color: var(--color-gold); }
+.field-error { color: #F3B8B0; font-size: var(--fs-xs); margin-top: var(--sp-2); }
+.field select { color-scheme: dark; }
+
+.login-back {
+  display: inline-block;
+  margin-top: var(--sp-5);
+  color: var(--color-text-on-dark-muted);
+  font-size: var(--fs-sm);
+}
+.login-back:hover { color: var(--color-gold-light); }
+
+/* ---------------------------------------------------------------------
+   Dashboard shell
+   --------------------------------------------------------------------- */
+.admin-header {
+  background: var(--color-navy);
+  color: var(--color-cream);
+  padding-block: var(--sp-4);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.admin-header .container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+.admin-header .brand img { width: 38px; height: 38px; border-radius: 50%; }
+.admin-header .brand-name { font-size: var(--fs-sm); }
+
+.admin-main { padding-block: var(--sp-6) var(--sp-9); }
+.admin-section { margin-bottom: var(--sp-7); }
+.admin-section-title {
+  font-family: var(--font-display);
+  color: var(--color-navy);
+  font-size: var(--fs-xl);
+  margin-bottom: var(--sp-4);
+}
+
+/* Stat cards */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--sp-3);
+}
+.stat-card {
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--sp-4);
+  box-shadow: var(--shadow-sm);
+}
+.stat-value { font-size: var(--fs-2xl); font-weight: 700; color: var(--color-navy); }
+.stat-label { color: var(--color-text-muted); font-size: var(--fs-xs); margin-top: var(--sp-1); }
+
+.category-stat-list { display: flex; flex-direction: column; gap: var(--sp-2); margin-top: var(--sp-4); }
+.category-stat-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: var(--sp-3) var(--sp-4); background: var(--color-white);
+  border: 1px solid var(--color-border); border-radius: var(--radius-sm); font-size: var(--fs-sm);
+}
+.category-stat-row strong { color: var(--color-navy); }
+
+/* ---------------------------------------------------------------------
+   Add-work form + uploader
+   --------------------------------------------------------------------- */
+.admin-card {
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-5);
+  box-shadow: var(--shadow-sm);
+}
+.admin-card .field label { color: var(--color-text-muted); }
+.admin-card .field input,
+.admin-card .field textarea,
+.admin-card .field select {
+  border-color: var(--color-border);
+  background: var(--color-white);
+  color: var(--color-text);
+}
+.admin-card .field select { color-scheme: light; }
+.admin-card .field input:focus,
+.admin-card .field textarea:focus,
+.admin-card .field select:focus { border-color: var(--color-gold); }
+
+.dropzone {
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--sp-6) var(--sp-4);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+  color: var(--color-text-muted);
+}
+.dropzone:hover, .dropzone.is-dragover { border-color: var(--color-gold); background: #FBF3DF; }
+.dropzone input[type="file"] { display: none; }
+.dropzone .icon { width: 34px; height: 34px; color: var(--color-gold); margin-bottom: var(--sp-2); }
+
+.upload-list {
+  margin-top: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.upload-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+.upload-item img { width: 52px; height: 52px; object-fit: cover; border-radius: var(--radius-sm); flex-shrink: 0; }
+.upload-item-info { flex: 1; min-width: 0; }
+.upload-item-name { font-size: var(--fs-sm); font-weight: 600; color: var(--color-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.upload-item-meta { font-size: var(--fs-xs); color: var(--color-text-muted); }
+.upload-progress {
+  height: 6px;
+  border-radius: var(--radius-round);
+  background: var(--color-border);
+  overflow: hidden;
+  margin-top: var(--sp-2);
+}
+.upload-progress-bar { height: 100%; background: var(--color-gold); width: 0%; transition: width var(--transition-fast); }
+.upload-item-status { font-size: var(--fs-xs); font-weight: 700; flex-shrink: 0; }
+.upload-item.is-success .upload-item-status { color: var(--color-success); }
+.upload-item.is-failed .upload-item-status { color: var(--color-danger); }
+.upload-item-retry { flex-shrink: 0; }
+
+/* ---------------------------------------------------------------------
+   Works management list
+   --------------------------------------------------------------------- */
+.works-table {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.work-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+.work-row img { width: 64px; height: 64px; object-fit: cover; border-radius: var(--radius-sm); flex-shrink: 0; background: var(--color-border); }
+.work-row-info { flex: 1; min-width: 0; }
+.work-row-title { font-weight: 700; color: var(--color-navy); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.work-row-meta { font-size: var(--fs-xs); color: var(--color-text-muted); }
+.work-row-actions { display: flex; gap: var(--sp-2); flex-shrink: 0; }
+.badge {
+  display: inline-block;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  padding: 0.15rem 0.6rem;
+  border-radius: var(--radius-round);
+}
+.badge-active { background: var(--color-success-bg); color: var(--color-success); }
+.badge-inactive { background: #F1EDE0; color: var(--color-text-muted); }
+
+/* ---------------------------------------------------------------------
+   Modal (confirm delete / edit work)
+   --------------------------------------------------------------------- */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(3,7,12,0.55);
+  display: flex; align-items: center; justify-content: center; padding: var(--sp-5);
+  z-index: 800; opacity: 0; visibility: hidden; transition: opacity var(--transition-base), visibility var(--transition-base);
+}
+.modal-overlay.is-open { opacity: 1; visibility: visible; }
+.modal-box {
+  background: var(--color-white); border-radius: var(--radius-lg); padding: var(--sp-6);
+  max-width: 420px; width: 100%; box-shadow: var(--shadow-md);
+}
+.modal-title { font-weight: 700; font-size: var(--fs-md); color: var(--color-navy); margin-bottom: var(--sp-3); }
+.modal-desc { color: var(--color-text-muted); font-size: var(--fs-sm); margin-bottom: var(--sp-5); }
+.modal-actions { display: flex; gap: var(--sp-3); justify-content: flex-end; }
+.modal-actions .btn { flex: 1; }
+
+@media (min-width: 640px) {
+  .stat-grid { grid-template-columns: repeat(4, 1fr); }
+}
+@media (min-width: 900px) {
+  .admin-layout { display: grid; grid-template-columns: 1fr 380px; gap: var(--sp-6); align-items: start; }
+}

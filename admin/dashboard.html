@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>لوحة التحكم | معرض الحاج حماده نافع وزيري للأثاث</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#061A2F">
+<link rel="icon" href="../assets/icons/favicon-32.png" sizes="32x32">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@700&family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="./admin.css">
+</head>
+<body class="admin-body">
+
+<header class="admin-header">
+  <div class="container">
+    <div class="brand">
+      <picture>
+        <source srcset="../assets/logo.webp" type="image/webp">
+        <img src="../assets/logo.png" alt="" width="38" height="38" loading="eager" decoding="async">
+      </picture>
+      <span class="brand-name">لوحة التحكم</span>
+    </div>
+    <button type="button" class="btn btn-outline btn-sm" id="logout-btn">تسجيل الخروج</button>
+  </div>
+</header>
+
+<main class="admin-main">
+  <div class="container">
+
+    <!-- Stats -->
+    <section class="admin-section" aria-labelledby="stats-title">
+      <h2 class="admin-section-title" id="stats-title">نظرة عامة</h2>
+      <div class="stat-grid" id="stat-grid">
+        <div class="stat-card"><div class="stat-value" id="stat-works">—</div><div class="stat-label">إجمالي الأعمال</div></div>
+        <div class="stat-card"><div class="stat-value" id="stat-images">—</div><div class="stat-label">إجمالي الصور</div></div>
+        <div class="stat-card"><div class="stat-value" id="stat-active">—</div><div class="stat-label">أعمال منشورة</div></div>
+        <div class="stat-card"><div class="stat-value" id="stat-latest">—</div><div class="stat-label">آخر إضافة</div></div>
+      </div>
+      <div class="category-stat-list" id="category-stat-list"></div>
+    </section>
+
+    <div class="admin-layout">
+      <!-- Works list -->
+      <section class="admin-section" aria-labelledby="works-list-title">
+        <h2 class="admin-section-title" id="works-list-title">الأعمال</h2>
+        <div class="works-table" id="works-table" data-state="loading">
+          <p class="section-desc">جارٍ التحميل…</p>
+        </div>
+      </section>
+
+      <!-- Add work -->
+      <section class="admin-section" aria-labelledby="add-work-title">
+        <h2 class="admin-section-title" id="add-work-title">إضافة عمل جديد</h2>
+        <div class="admin-card">
+          <form id="add-work-form" novalidate>
+            <div class="field">
+              <label for="work-category">القسم</label>
+              <select id="work-category" name="category" required></select>
+              <p class="field-error" id="category-error" hidden></p>
+            </div>
+            <div class="field">
+              <label for="work-title">اسم العمل</label>
+              <input type="text" id="work-title" name="title" maxlength="120" required>
+              <p class="field-error" id="title-error" hidden></p>
+            </div>
+            <div class="field">
+              <label for="work-description">الوصف (اختياري)</label>
+              <textarea id="work-description" name="description" rows="3" maxlength="600"></textarea>
+              <p class="field-error" id="description-error" hidden></p>
+            </div>
+
+            <div class="field">
+              <label>الصور</label>
+              <label class="dropzone" id="dropzone" for="work-images">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7 9m5-5l5 5" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>
+                <div>اضغط لاختيار الصور أو اسحبها هنا</div>
+                <div class="upload-item-meta">JPG, PNG, WebP — حتى 8 م.بايت لكل صورة، وحتى 20 صورة</div>
+                <input type="file" id="work-images" accept="image/jpeg,image/png,image/webp" multiple>
+              </label>
+              <p class="field-error" id="images-error" hidden></p>
+            </div>
+
+            <div class="upload-list" id="upload-list"></div>
+
+            <button type="submit" class="btn btn-gold btn-block" id="add-work-submit" style="margin-top:1.25rem;">
+              <span id="add-work-submit-label">حفظ العمل</span>
+            </button>
+          </form>
+        </div>
+      </section>
+    </div>
+  </div>
+</main>
+
+<!-- Confirm delete modal -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal-box" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title">
+    <h3 class="modal-title" id="confirm-title">تأكيد الحذف</h3>
+    <p class="modal-desc" id="confirm-desc">هل أنت متأكد من الحذف؟ لا يمكن التراجع عن هذا الإجراء.</p>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-outline" id="confirm-cancel" style="color:var(--color-navy);border-color:var(--color-border);">إلغاء</button>
+      <button type="button" class="btn" id="confirm-ok" style="background:var(--color-danger);color:#fff;">حذف</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/config.js"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/validation.js"></script>
+<script src="../js/api.js"></script>
+<script src="./admin.js"></script>
+</body>
+</html>
