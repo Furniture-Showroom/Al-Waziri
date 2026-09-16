@@ -14,14 +14,18 @@
  */
 'use strict';
 
-const CACHE_VERSION = 'showroom-v1';
+const CACHE_VERSION = 'showroom-v2';
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 
 const SHELL_ASSETS = [
   './index.html',
   './offline.html',
   './css/style.css',
-  './js/config.js',
+  // NOTE: config.js is intentionally NOT precached/cache-first. It holds the
+  // live apiBaseUrl and contact info, which can change after a deploy — if a
+  // stale copy got cached here, the site would keep calling an old/broken
+  // API URL until someone manually cleared site data. It is left
+  // unintercepted below so it always comes straight from the network.
   './js/utils.js',
   './js/validation.js',
   './js/api.js',
