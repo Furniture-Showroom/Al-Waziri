@@ -19,8 +19,8 @@ const SITE_CONFIG = {
   whatsapp: '+201114010151',
   facebook: 'https://www.facebook.com/profile.php?id=100076597119718',
 
-  // TODO: set this to your deployed Apps Script Web App "/exec" URL.
-  apiBaseUrl: 'https://script.google.com/macros/s/REPLACE_WITH_YOUR_DEPLOYMENT_ID/exec',
+  // Deployed Google Apps Script Web App URL.
+  apiBaseUrl: 'https://script.google.com/macros/s/AKfycbwTjRGv3clNjdZKFh2dLWj3yfF9c7EOgF3gyfn2UXSn9wfzmfK-ZBeRTam05TMnXPtE/exec',
 
   categories: [
     { id: 'bedrooms', label: 'غرف نوم' },
