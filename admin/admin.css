@@ -66,6 +66,62 @@ body.admin-body {
 }
 .login-back:hover { color: var(--color-gold-light); }
 
+/* Automatic server health-check shown on the login page — turns every
+   "why won't it log in" question into a plain-language message the user
+   can read and act on directly, without opening dev tools. */
+.server-status {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 0.6rem 0.9rem;
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-xs);
+  margin-bottom: var(--sp-5);
+  text-align: right;
+  background: rgba(255,255,255,0.04);
+  color: var(--color-text-on-dark-muted);
+  border: 1px solid var(--color-border-dark);
+}
+.server-status-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: #7C8794;
+}
+.server-status.is-checking .server-status-dot {
+  background: var(--color-gold);
+  animation: server-status-pulse 1s ease-in-out infinite;
+}
+.server-status.is-ok {
+  background: var(--color-success-bg);
+  border-color: transparent;
+  color: var(--color-success);
+}
+.server-status.is-ok .server-status-dot { background: var(--color-success); animation: none; }
+.server-status.is-error {
+  background: var(--color-danger-bg);
+  border-color: transparent;
+  color: var(--color-danger);
+  align-items: flex-start;
+  flex-direction: column;
+}
+.server-status.is-error .server-status-dot { background: var(--color-danger); animation: none; }
+.server-status-detail {
+  font-size: 10px;
+  opacity: 0.8;
+  word-break: break-all;
+  direction: ltr;
+  text-align: right;
+}
+.server-status-retry {
+  margin-top: var(--sp-2);
+  align-self: flex-start;
+}
+@keyframes server-status-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
 /* ---------------------------------------------------------------------
    Dashboard shell
    --------------------------------------------------------------------- */

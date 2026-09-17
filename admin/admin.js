@@ -21,6 +21,71 @@ function handleAuthFailure(result) {
 // =========================================================================
 // Login page
 // =========================================================================
+
+/**
+ * Pings a public, no-auth endpoint on page load and shows a plain-language
+ * status on the login page itself. This turns "why won't it log in"
+ * (wrong apiBaseUrl, deployment down, wrong access level, ...) into one
+ * readable message instead of a multi-step dev-tools investigation.
+ */
+async function runServerHealthCheck() {
+  const statusEl = Utils.qs('#server-status');
+  const textEl = Utils.qs('#server-status-text');
+  if (!statusEl || !textEl) return;
+
+  statusEl.className = 'server-status is-checking';
+  textEl.textContent = 'جارٍ التحقق من الاتصال بالخادم…';
+  Utils.qsa('.server-status-detail, .server-status-retry', statusEl).forEach((el) => el.remove());
+
+  const configuredUrl = (window.SITE_CONFIG && SITE_CONFIG.apiBaseUrl) || '';
+
+  if (!configuredUrl || configuredUrl.includes('REPLACE_WITH_YOUR_DEPLOYMENT_ID')) {
+    showHealthError(
+      'رابط الخادم (apiBaseUrl) غير مضبوط في js/config.js — عدّله من مستودع GitHub.',
+      null
+    );
+    return;
+  }
+
+  const result = await Api.getCategories();
+
+  if (result.success) {
+    statusEl.className = 'server-status is-ok';
+    textEl.textContent = 'متصل بالخادم بنجاح';
+    return;
+  }
+
+  var friendly = {
+    NETWORK_ERROR: 'تعذر الوصول للخادم — تأكد أن رابط Apps Script منشور ومتاح لأي شخص (Anyone).',
+    TIMEOUT: 'استغرق الخادم وقتًا طويلاً للرد — جرّب مرة أخرى بعد قليل.',
+    BAD_RESPONSE: 'رد الخادم غير متوقع — تأكد أن كل ملفات apps-script منسوخة بشكل صحيح.',
+    UNKNOWN_ACTION: 'الخادم يرد لكن لا يعرف هذا الإجراء — تأكد أن Code.gs محدَّث ومنشور بآخر إصدار.',
+    SERVER_NOT_CONFIGURED: 'إعداد الخادم غير مكتمل (تأكد من إنشاء الأوراق ومفتاح ImgBB في Script Properties).',
+  }[result.error.code];
+
+  showHealthError(friendly || result.error.message || 'تعذر الاتصال بالخادم لسبب غير معروف.', configuredUrl);
+}
+
+function showHealthError(message, configuredUrl) {
+  const statusEl = Utils.qs('#server-status');
+  const textEl = Utils.qs('#server-status-text');
+  statusEl.className = 'server-status is-error';
+  textEl.textContent = message;
+
+  if (configuredUrl) {
+    const detail = Utils.el('div', { class: 'server-status-detail', text: `الرابط الحالي: ${configuredUrl}` });
+    statusEl.appendChild(detail);
+  }
+  const retryBtn = Utils.el('button', {
+    class: 'btn btn-outline btn-sm server-status-retry',
+    type: 'button',
+    text: 'إعادة المحاولة',
+    style: 'color:var(--color-danger);border-color:var(--color-danger);',
+    onClick: runServerHealthCheck,
+  });
+  statusEl.appendChild(retryBtn);
+}
+
 function setupLoginPage() {
   const form = Utils.qs('#login-form');
   if (!form) return;
@@ -29,6 +94,8 @@ function setupLoginPage() {
     window.location.href = './dashboard.html';
     return;
   }
+
+  runServerHealthCheck();
 
   const submitBtn = Utils.qs('#login-submit');
   const submitLabel = Utils.qs('#login-submit-label');

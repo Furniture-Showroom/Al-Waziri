@@ -23,6 +23,13 @@
       <h1 class="login-title">لوحة التحكم</h1>
       <p class="login-sub">تسجيل الدخول لإدارة أعمال المعرض</p>
 
+      <!-- فحص اتصال تلقائي بالخادم — يظهر فورًا لو في أي مشكلة إعداد،
+           بدل ما تحتاج تفتح أدوات المطوّر كل مرة. -->
+      <div class="server-status" id="server-status" role="status">
+        <span class="server-status-dot"></span>
+        <span id="server-status-text">جارٍ التحقق من الاتصال بالخادم…</span>
+      </div>
+
       <div class="field">
         <label for="username">اسم المستخدم</label>
         <input type="text" id="username" name="username" autocomplete="username" required>
