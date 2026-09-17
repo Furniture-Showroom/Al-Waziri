@@ -24,7 +24,13 @@ const Api = (() => {
   const REQUEST_TIMEOUT_MS = 20000;
 
   function getBaseUrl() {
-    return (window.SITE_CONFIG && window.SITE_CONFIG.apiBaseUrl) || '';
+    // NOTE: SITE_CONFIG is declared with `const` in config.js, so it is NOT
+    // a property of `window` (only `var` declarations become window
+    // properties) — but it IS visible as a plain identifier to every later
+    // <script> on the page, since classic scripts share one global scope.
+    // `typeof` guards against a hard ReferenceError if config.js failed to
+    // load at all, instead degrading to the NOT_CONFIGURED message below.
+    return (typeof SITE_CONFIG !== 'undefined' && SITE_CONFIG.apiBaseUrl) || '';
   }
 
   function getToken() {

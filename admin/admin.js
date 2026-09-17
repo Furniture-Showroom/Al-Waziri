@@ -37,7 +37,9 @@ async function runServerHealthCheck() {
   textEl.textContent = 'جارٍ التحقق من الاتصال بالخادم…';
   Utils.qsa('.server-status-detail, .server-status-retry', statusEl).forEach((el) => el.remove());
 
-  const configuredUrl = (window.SITE_CONFIG && SITE_CONFIG.apiBaseUrl) || '';
+  // See the note in js/api.js's getBaseUrl(): SITE_CONFIG is a `const`
+  // global, never a `window` property, even though it loaded correctly.
+  const configuredUrl = (typeof SITE_CONFIG !== 'undefined' && SITE_CONFIG.apiBaseUrl) || '';
 
   if (!configuredUrl || configuredUrl.includes('REPLACE_WITH_YOUR_DEPLOYMENT_ID')) {
     showHealthError(

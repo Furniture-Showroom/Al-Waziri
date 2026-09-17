@@ -238,6 +238,8 @@
     renderFilterPills();
     setupRetry();
     loadWorks();
-    if (window.PWA) PWA.init();
+    // See js/api.js's getBaseUrl() note: PWA is a `const` global, not a
+    // `window` property, even when pwa.js loaded successfully.
+    if (typeof PWA !== 'undefined') PWA.init();
   });
 })();
