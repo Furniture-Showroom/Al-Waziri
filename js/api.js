@@ -21,7 +21,7 @@
 
 const Api = (() => {
   const TOKEN_KEY = 'showroom_admin_session';
-  const REQUEST_TIMEOUT_MS = 20000;
+  const REQUEST_TIMEOUT_MS = 12000;
 
   function getBaseUrl() {
     // NOTE: SITE_CONFIG is declared with `const` in config.js, so it is NOT

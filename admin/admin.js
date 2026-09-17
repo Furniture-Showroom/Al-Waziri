@@ -46,6 +46,15 @@ async function runServerHealthCheck() {
   textEl.textContent = 'جارٍ التحقق من الاتصال بالخادم…';
   Utils.qsa('.server-status-detail, .server-status-retry', statusEl).forEach((el) => el.remove());
 
+  // Google Apps Script "wakes up" the first time it's called after a
+  // while (a few seconds), so if the check is still running after 4s
+  // this is very likely why — say so instead of leaving it ambiguous.
+  const slowNotice = setTimeout(() => {
+    if (statusEl.classList.contains('is-checking')) {
+      textEl.textContent = 'لا يزال يتحقق… الخادم يبدأ التشغيل لأول مرة، قد يستغرق بضع ثوانٍ إضافية.';
+    }
+  }, 4000);
+
   // See the note in js/api.js's getBaseUrl(): SITE_CONFIG is a `const`
   // global, never a `window` property, even though it loaded correctly.
   const configuredUrl = (typeof SITE_CONFIG !== 'undefined' && SITE_CONFIG.apiBaseUrl) || '';
@@ -458,12 +467,25 @@ function setupDashboardPage() {
       errorEl.textContent = errors[field] || '';
       errorEl.hidden = !errors[field];
     });
-    if (!valid) return;
+    if (!valid) {
+      // The person may be scrolled down looking at the image queue when
+      // they click "save" — an inline error up near the title field is
+      // easy to miss from there, so make it impossible to ignore.
+      const firstErrorField = ['category', 'title', 'description'].find((field) => errors[field]);
+      Utils.toast(errors[firstErrorField] || 'أكمل البيانات المطلوبة أولًا.', 'error');
+      const targetInput = Utils.qs(`#work-${firstErrorField}`);
+      if (targetInput) {
+        targetInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        targetInput.focus();
+      }
+      return;
+    }
 
     const validFiles = queue.filter((item) => item.status !== 'failed' || item.uploadAttempted);
     if (!validFiles.length) {
       Utils.qs('#images-error').textContent = 'أضف صورة واحدة على الأقل.';
       Utils.qs('#images-error').hidden = false;
+      Utils.toast('أضف صورة واحدة على الأقل.', 'error');
       return;
     }
 
