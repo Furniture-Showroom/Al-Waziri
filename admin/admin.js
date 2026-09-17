@@ -27,8 +27,17 @@ function handleAuthFailure(result) {
  * status on the login page itself. This turns "why won't it log in"
  * (wrong apiBaseUrl, deployment down, wrong access level, ...) into one
  * readable message instead of a multi-step dev-tools investigation.
+ *
+ * On failure it also keeps quietly retrying in the background every 15s,
+ * so a transient hiccup (e.g. Apps Script waking up from a cold start)
+ * clears itself without the person needing to notice and click "retry".
  */
+const HEALTH_CHECK_RETRY_MS = 15000;
+let healthCheckTimer = null;
+
 async function runServerHealthCheck() {
+  clearTimeout(healthCheckTimer);
+
   const statusEl = Utils.qs('#server-status');
   const textEl = Utils.qs('#server-status-text');
   if (!statusEl || !textEl) return;
@@ -42,6 +51,8 @@ async function runServerHealthCheck() {
   const configuredUrl = (typeof SITE_CONFIG !== 'undefined' && SITE_CONFIG.apiBaseUrl) || '';
 
   if (!configuredUrl || configuredUrl.includes('REPLACE_WITH_YOUR_DEPLOYMENT_ID')) {
+    // Not a transient problem — retrying automatically wouldn't help, so
+    // we don't schedule a background retry for this specific case.
     showHealthError(
       'رابط الخادم (apiBaseUrl) غير مضبوط في js/config.js — عدّله من مستودع GitHub.',
       null
@@ -66,6 +77,7 @@ async function runServerHealthCheck() {
   }[result.error.code];
 
   showHealthError(friendly || result.error.message || 'تعذر الاتصال بالخادم لسبب غير معروف.', configuredUrl);
+  healthCheckTimer = setTimeout(runServerHealthCheck, HEALTH_CHECK_RETRY_MS);
 }
 
 function showHealthError(message, configuredUrl) {
@@ -251,6 +263,7 @@ function setupDashboardPage() {
           return;
         }
         Utils.toast('تم حذف العمل.', 'success');
+        Api.invalidateReadCache();
         loadWorks();
         loadStats();
       });
@@ -285,6 +298,7 @@ function setupDashboardPage() {
               }
               row.remove();
               Utils.toast('تم حذف الصورة.', 'success');
+              Api.invalidateReadCache();
               loadStats();
             });
           });
@@ -490,6 +504,7 @@ function setupDashboardPage() {
     }
 
     Utils.toast('تم إضافة العمل بنجاح.', 'success');
+    Api.invalidateReadCache();
     addWorkForm.reset();
     queue = [];
     currentWorkId = null;

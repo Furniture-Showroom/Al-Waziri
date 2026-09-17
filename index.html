@@ -35,6 +35,14 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
 
+<!-- Warm up the API and image-host connections (DNS + TLS) before the
+     first request is even made, so the actual data request that follows
+     doesn't pay that setup cost. -->
+<link rel="preconnect" href="https://script.google.com">
+<link rel="preconnect" href="https://script.googleusercontent.com">
+<link rel="dns-prefetch" href="https://i.ibb.co">
+<link rel="preconnect" href="https://i.ibb.co" crossorigin>
+
 <link rel="stylesheet" href="./css/style.css">
 
 <script type="application/ld+json">

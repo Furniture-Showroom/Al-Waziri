@@ -108,8 +108,37 @@ const Api = (() => {
     }
   }
 
-  /** Core GET call for read-only, cacheable actions. */
-  async function get(action, params = {}) {
+  /** Core GET call for read-only actions, with a short client-side cache
+   * and one automatic retry on transient network failure. Retrying is only
+   * ever done here (never in post()) because GET reads are safe to repeat;
+   * retrying a POST could duplicate a side effect (e.g. a second image row)
+   * if the first attempt actually succeeded but its response was lost. */
+  const READ_CACHE_TTL_MS = 90 * 1000;
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  function cacheKeyFor(action, params) {
+    return 'api_cache_' + new URLSearchParams({ action, ...params }).toString();
+  }
+  function readCache(key) {
+    const entry = Utils.storage.get(key);
+    if (!entry || typeof entry.expiresAt !== 'number' || Date.now() > entry.expiresAt) return null;
+    return entry.value;
+  }
+  function writeCache(key, value) {
+    Utils.storage.set(key, { value, expiresAt: Date.now() + READ_CACHE_TTL_MS });
+  }
+
+  async function attemptGet(url) {
+    try {
+      const response = await withTimeout(fetch(url, { method: 'GET' }), REQUEST_TIMEOUT_MS);
+      const json = await response.json();
+      return normalize(json);
+    } catch (err) {
+      return networkErrorResult(err);
+    }
+  }
+
+  async function get(action, params = {}, { cache = false } = {}) {
     const baseUrl = getBaseUrl();
     if (!baseUrl || baseUrl.includes('REPLACE_WITH_YOUR_DEPLOYMENT_ID')) {
       return {
@@ -118,14 +147,25 @@ const Api = (() => {
         error: { code: 'NOT_CONFIGURED', message: 'لم يتم ضبط رابط الخادم بعد (apiBaseUrl).' },
       };
     }
-    const query = new URLSearchParams({ action, ...params }).toString();
-    try {
-      const response = await withTimeout(fetch(`${baseUrl}?${query}`, { method: 'GET' }), REQUEST_TIMEOUT_MS);
-      const json = await response.json();
-      return normalize(json);
-    } catch (err) {
-      return networkErrorResult(err);
+
+    const cacheKey = cache ? cacheKeyFor(action, params) : null;
+    if (cacheKey) {
+      const cached = readCache(cacheKey);
+      if (cached) return cached;
     }
+
+    const query = new URLSearchParams({ action, ...params }).toString();
+    const url = `${baseUrl}?${query}`;
+
+    let result = await attemptGet(url);
+    const isTransient = !result.success && (result.error.code === 'NETWORK_ERROR' || result.error.code === 'TIMEOUT');
+    if (isTransient) {
+      await sleep(700);
+      result = await attemptGet(url);
+    }
+
+    if (result.success && cacheKey) writeCache(cacheKey, result);
+    return result;
   }
 
   function normalize(json) {
@@ -134,9 +174,23 @@ const Api = (() => {
   }
 
   // ---- Public read endpoints -------------------------------------------
-  const getCategories = () => get('getCategories');
-  const getWorks = (category) => get('getWorks', category ? { category } : {});
-  const getWork = (workId) => get('getWork', { workId });
+  // cache:true — short-lived client cache so repeat visits/filter clicks
+  // feel instant instead of re-hitting Apps Script every time.
+  const getCategories = () => get('getCategories', {}, { cache: true });
+  const getWorks = (category) => get('getWorks', category ? { category } : {}, { cache: true });
+  const getWork = (workId) => get('getWork', { workId }); // not cached: opened once per click, must reflect live edits
+
+  /** Clears the local getWorks/getCategories cache — call after any admin
+   * action that changes what the public site should show, so the admin's
+   * own next view isn't served stale cached data from before the change. */
+  function invalidateReadCache() {
+    try {
+      const keys = Object.keys(window.sessionStorage).filter((k) => k.startsWith('api_cache_'));
+      keys.forEach((k) => window.sessionStorage.removeItem(k));
+    } catch (err) {
+      /* sessionStorage unavailable — nothing to clear */
+    }
+  }
 
   // ---- Auth ---------------------------------------------------------------
   async function login(username, password) {
@@ -248,6 +302,7 @@ const Api = (() => {
     getCategories,
     getWorks,
     getWork,
+    invalidateReadCache,
     login,
     logout,
     createWork,
