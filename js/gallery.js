@@ -12,6 +12,7 @@ const Gallery = (() => {
   let titleEl = null;
   let metaEl = null;
   let counterEl = null;
+  let dotsEl = null;
   let thumbsEl = null;
   let prevBtn = null;
   let nextBtn = null;
@@ -54,9 +55,10 @@ const Gallery = (() => {
     ]);
     const footer = Utils.el('div', { class: 'lightbox-footer' }, [counterEl, whatsappBtn]);
 
+    dotsEl = Utils.el('div', { class: 'lightbox-dots', role: 'tablist', 'aria-label': 'صور العمل' });
     thumbsEl = Utils.el('div', { class: 'lightbox-thumbs' });
 
-    rootEl.append(header, stage, footer, thumbsEl);
+    rootEl.append(header, stage, dotsEl, footer, thumbsEl);
     document.body.appendChild(rootEl);
 
     closeBtn.addEventListener('click', close);
@@ -99,7 +101,20 @@ const Gallery = (() => {
   function render() {
     if (!work) return;
     const image = work.images[currentIndex];
-    stageImg.src = image.url;
+
+    // Cross-fade instead of an abrupt swap — feels like a polished
+    // screenshot-style viewer rather than a plain image tag changing src.
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduceMotion) {
+      stageImg.src = image.url;
+    } else {
+      stageImg.style.opacity = '0';
+      const swap = () => {
+        stageImg.src = image.url;
+        stageImg.onload = () => { stageImg.style.opacity = '1'; };
+      };
+      setTimeout(swap, 120);
+    }
     stageImg.alt = `${work.title} — صورة ${currentIndex + 1}`;
     isZoomed = false;
     stageImg.style.transform = '';
@@ -115,11 +130,31 @@ const Gallery = (() => {
     prevBtn.disabled = currentIndex <= 0;
     nextBtn.disabled = currentIndex >= work.images.length - 1;
 
+    renderDots();
     renderThumbs();
 
     // Only warm the immediate neighbors — never the whole set.
     preload(work.images[currentIndex - 1] && work.images[currentIndex - 1].url);
     preload(work.images[currentIndex + 1] && work.images[currentIndex + 1].url);
+  }
+
+  function renderDots() {
+    dotsEl.innerHTML = '';
+    if (work.images.length <= 1) return; // a single image needs no dots
+    work.images.forEach((_, index) => {
+      const dot = Utils.el('button', {
+        class: `lightbox-dot${index === currentIndex ? ' is-active' : ''}`,
+        type: 'button',
+        role: 'tab',
+        'aria-label': `صورة ${index + 1}`,
+        'aria-selected': index === currentIndex ? 'true' : 'false',
+        onClick: () => {
+          currentIndex = index;
+          render();
+        },
+      });
+      dotsEl.appendChild(dot);
+    });
   }
 
   function renderThumbs() {

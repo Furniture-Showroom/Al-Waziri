@@ -428,8 +428,8 @@ h1, h2, h3, h4, p { margin: 0; }
 .hero-visual {
   margin-top: var(--sp-6);
   width: 100%;
-  max-width: 620px;
-  aspect-ratio: 16 / 10;
+  max-width: 900px;
+  aspect-ratio: 1200 / 480;
   border-radius: var(--radius-lg);
   overflow: hidden;
   border: 1px solid var(--color-border-dark);
@@ -682,23 +682,6 @@ h1, h2, h3, h4, p { margin: 0; }
 .feature-desc { color: var(--color-text-muted); font-size: var(--fs-sm); }
 
 /* ---------------------------------------------------------------------
-   11) About
-   --------------------------------------------------------------------- */
-.about-layout {
-  display: grid;
-  gap: var(--sp-6);
-  align-items: center;
-}
-.about-media {
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  aspect-ratio: 4/3;
-  box-shadow: var(--shadow-md);
-}
-.about-media img { width: 100%; height: 100%; object-fit: cover; }
-.about-text p + p { margin-top: var(--sp-3); }
-
-/* ---------------------------------------------------------------------
    12) Contact
    --------------------------------------------------------------------- */
 .contact-grid {
@@ -794,6 +777,11 @@ h1, h2, h3, h4, p { margin: 0; }
   border-radius: var(--radius-sm);
   user-select: none;
   -webkit-user-drag: none;
+  opacity: 1;
+  transition: opacity 180ms ease, transform var(--transition-base);
+}
+@media (prefers-reduced-motion: reduce) {
+  .lightbox-stage img { transition: none; }
 }
 .lightbox-nav {
   position: absolute;
@@ -809,6 +797,29 @@ h1, h2, h3, h4, p { margin: 0; }
 .lightbox-nav.prev { inset-inline-start: var(--sp-3); }
 .lightbox-nav.next { inset-inline-end: var(--sp-3); }
 .lightbox-nav[disabled] { opacity: 0.25; pointer-events: none; }
+
+/* Dot indicators — the "screenshot carousel" touch, like app-store style
+   galleries: a quick visual sense of position and count at a glance. */
+.lightbox-dots {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--sp-2);
+  padding-bottom: var(--sp-2);
+  flex-shrink: 0;
+}
+.lightbox-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.28);
+  transition: background var(--transition-fast), width var(--transition-fast);
+}
+.lightbox-dot:hover { background: rgba(217,166,46,0.55); }
+.lightbox-dot.is-active {
+  background: var(--color-gold);
+  width: 20px;
+  border-radius: var(--radius-round);
+}
 
 .lightbox-footer {
   display: flex;
@@ -929,7 +940,6 @@ body.lightbox-open { overflow: hidden; }
   .carousel-card { flex-basis: 46%; }
   .carousel-viewport { padding-inline: 27%; }
   .feature-grid { grid-template-columns: repeat(3, 1fr); }
-  .about-layout { grid-template-columns: 1fr 1fr; }
 }
 
 @media (min-width: 1024px) {

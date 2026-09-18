@@ -33,11 +33,16 @@ const SITE_CONFIG = {
   ],
 
   // Upload constraints (kept here so admin.js and README stay in sync).
+  // All raster image formats are accepted except GIF (per the business
+  // owner's request — GIF also historically implies "animated", which
+  // this gallery isn't built to handle). The allowlist below matches
+  // exactly what ImgBB's API accepts server-side, since accepting a
+  // format here that ImgBB rejects would just fail after the upload.
   upload: {
     maxFileSizeBytes: 8 * 1024 * 1024, // 8MB per image
     maxFilesPerWork: 20,
-    allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
-    allowedExtensions: ['.jpg', '.jpeg', '.png', '.webp'],
+    allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/bmp', 'image/tiff'],
+    allowedExtensions: ['.jpg', '.jpeg', '.png', '.webp', '.bmp', '.tif', '.tiff'],
   },
 };
 

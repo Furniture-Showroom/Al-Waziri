@@ -317,20 +317,93 @@ function setupDashboardPage() {
       }
     });
 
+    const editBtn = Utils.el('button', { class: 'btn btn-outline btn-sm', type: 'button', text: 'تعديل' });
+    const editPanel = Utils.el('div', { class: 'admin-card', hidden: true, style: 'margin-top:var(--sp-3);' });
+    let editBuilt = false;
+    editBtn.addEventListener('click', () => {
+      editPanel.hidden = !editPanel.hidden;
+      if (!editPanel.hidden && !editBuilt) {
+        editBuilt = true;
+        buildEditForm(work, editPanel, {
+          onSaved: (updatedFields) => {
+            Object.assign(work, updatedFields);
+            titleEl.textContent = work.title;
+            metaCategoryText.textContent = categoryLabel(work.category);
+            editPanel.hidden = true;
+          },
+        });
+      }
+    });
+
     const row = Utils.el('div', { class: 'work-row' }, [
       Utils.el('img', { src: work.coverImageUrl || '', alt: '', loading: 'lazy', decoding: 'async' }),
       Utils.el('div', { class: 'work-row-info' }, [
         Utils.el('div', { class: 'work-row-title', text: work.title }),
         Utils.el('div', { class: 'work-row-meta' }, [
-          `${categoryLabel(work.category)} · ${work.imageCount || 0} صورة · `,
+          Utils.el('span', { text: categoryLabel(work.category) }),
+          ` · ${work.imageCount || 0} صورة · `,
           Utils.el('span', { class: `badge ${work.active ? 'badge-active' : 'badge-inactive'}`, text: work.active ? 'منشور' : 'غير منشور' }),
         ]),
       ]),
-      Utils.el('div', { class: 'work-row-actions' }, [toggleBtn, deleteBtn]),
+      Utils.el('div', { class: 'work-row-actions' }, [editBtn, toggleBtn, deleteBtn]),
     ]);
+    const titleEl = Utils.qs('.work-row-title', row);
+    const metaCategoryText = Utils.qs('.work-row-meta span', row);
 
-    const wrapper = Utils.el('div', {}, [row, imagesPanel]);
+    const wrapper = Utils.el('div', {}, [row, editPanel, imagesPanel]);
     return wrapper;
+  }
+
+  /** Builds the inline "edit work" form (category/title/description) inside `container`. */
+  function buildEditForm(work, container, { onSaved }) {
+    container.innerHTML = '';
+
+    const categorySelectEdit = Utils.el('select');
+    SITE_CONFIG.categories.forEach((cat) => {
+      categorySelectEdit.appendChild(Utils.el('option', { value: cat.id, selected: cat.id === work.category || undefined }, cat.label));
+    });
+    const titleInput = Utils.el('input', { type: 'text', value: work.title, maxlength: '120' });
+    const descInput = Utils.el('textarea', { rows: '3', maxlength: '600' }, work.description || '');
+    const errorEl = Utils.el('p', { class: 'field-error', hidden: true });
+    const saveBtn = Utils.el('button', { type: 'button', class: 'btn btn-gold btn-sm' }, 'حفظ التعديلات');
+    const cancelBtn = Utils.el('button', { type: 'button', class: 'btn btn-outline btn-sm', style: 'color:var(--color-navy);border-color:var(--color-border);' }, 'إلغاء');
+
+    container.append(
+      Utils.el('div', { class: 'field' }, [Utils.el('label', {}, 'القسم'), categorySelectEdit]),
+      Utils.el('div', { class: 'field' }, [Utils.el('label', {}, 'اسم العمل'), titleInput]),
+      Utils.el('div', { class: 'field' }, [Utils.el('label', {}, 'الوصف'), descInput]),
+      errorEl,
+      Utils.el('div', { style: 'display:flex;gap:0.75rem;' }, [saveBtn, cancelBtn])
+    );
+
+    cancelBtn.addEventListener('click', () => { container.hidden = true; });
+
+    saveBtn.addEventListener('click', async () => {
+      const patch = { category: categorySelectEdit.value, title: titleInput.value.trim(), description: descInput.value.trim() };
+      const { valid, errors } = Validation.validateWorkForm(patch);
+      if (!valid) {
+        errorEl.textContent = errors.title || errors.category || errors.description;
+        errorEl.hidden = false;
+        return;
+      }
+      errorEl.hidden = true;
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'جارٍ الحفظ…';
+
+      const result = await Api.updateWork(work.id, patch);
+
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'حفظ التعديلات';
+
+      if (handleAuthFailure(result)) return;
+      if (!result.success) {
+        Utils.toast(result.error.message || 'تعذر حفظ التعديلات.', 'error');
+        return;
+      }
+      Utils.toast('تم حفظ التعديلات.', 'success');
+      Api.invalidateReadCache();
+      onSaved(patch);
+    });
   }
 
   // ---- Add-work form + uploader ------------------------------------------
