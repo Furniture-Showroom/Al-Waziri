@@ -22,6 +22,7 @@
 const Api = (() => {
   const TOKEN_KEY = 'showroom_admin_session';
   const REQUEST_TIMEOUT_MS = 12000;
+  const UPLOAD_TIMEOUT_MS = 45000; // uploads go through ImgBB server-side too, so allow more time
 
   function getBaseUrl() {
     // NOTE: SITE_CONFIG is declared with `const` in config.js, so it is NOT
@@ -238,57 +239,58 @@ const Api = (() => {
   }
 
   /**
-   * Upload one image with real byte-level progress via XMLHttpRequest
-   * (fetch() has no upload progress event). Resolves with the same
-   * { success, data, error } shape as every other call — network errors
-   * become a normal failure result rather than a rejected promise, so
-   * callers don't need two error-handling paths.
+   * Upload one image using `fetch` — the same transport already proven
+   * reliable for login/getCategories on this deployment. An earlier
+   * version used XMLHttpRequest to get real upload-progress events, but
+   * XHR has known issues following the cross-origin redirect Apps Script
+   * issues on POST once the body gets large (base64 images), which
+   * surfaced as opaque network errors. `fetch` handles that redirect
+   * correctly, so we trade real byte-progress for a simulated progress
+   * bar (steady climb to 90% while waiting, snaps to 100% on success) —
+   * reliability first. Resolves with the same { success, data, error }
+   * shape as every other call; network errors are a normal failure
+   * result, not a rejected promise.
    */
-  function uploadImageWithProgress(workId, file, onProgress) {
+  async function uploadImageWithProgress(workId, file, onProgress) {
     const baseUrl = getBaseUrl();
     if (!baseUrl || baseUrl.includes('REPLACE_WITH_YOUR_DEPLOYMENT_ID')) {
-      return Promise.resolve({
-        success: false,
-        data: null,
-        error: { code: 'NOT_CONFIGURED', message: 'لم يتم ضبط رابط الخادم بعد (apiBaseUrl).' },
-      });
+      return { success: false, data: null, error: { code: 'NOT_CONFIGURED', message: 'لم يتم ضبط رابط الخادم بعد (apiBaseUrl).' } };
     }
     const token = getToken();
     if (!token) {
-      return Promise.resolve({ success: false, data: null, error: { code: 'UNAUTHORIZED', message: 'يجب تسجيل الدخول أولًا.' } });
+      return { success: false, data: null, error: { code: 'UNAUTHORIZED', message: 'يجب تسجيل الدخول أولًا.' } };
     }
 
-    return readFileAsBase64(file)
-      .then(
-        (fileBase64) =>
-          new Promise((resolve) => {
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', baseUrl, true);
-            xhr.setRequestHeader('Content-Type', 'text/plain;charset=utf-8');
-            xhr.timeout = 60000;
+    const tick = typeof onProgress === 'function' ? onProgress : () => {};
+    let simulated = 5;
+    tick(simulated);
+    const progressTimer = setInterval(() => {
+      simulated = Math.min(simulated + 7, 90);
+      tick(simulated);
+    }, 400);
 
-            if (xhr.upload && typeof onProgress === 'function') {
-              xhr.upload.onprogress = (event) => {
-                if (event.lengthComputable) onProgress(Math.round((event.loaded / event.total) * 100));
-              };
-            }
+    let fileBase64;
+    try {
+      fileBase64 = await readFileAsBase64(file);
+    } catch (err) {
+      clearInterval(progressTimer);
+      return { success: false, data: null, error: { code: 'FILE_READ_ERROR', message: 'تعذرت قراءة الملف.' } };
+    }
 
-            xhr.onload = () => {
-              try {
-                resolve(normalize(JSON.parse(xhr.responseText)));
-              } catch (err) {
-                resolve({ success: false, data: null, error: { code: 'BAD_RESPONSE', message: 'رد غير متوقع من الخادم.' } });
-              }
-            };
-            xhr.onerror = () => resolve(networkErrorResult(new Error('NETWORK_ERROR')));
-            xhr.ontimeout = () => resolve(networkErrorResult(new Error('TIMEOUT')));
-
-            xhr.send(JSON.stringify({ action: 'uploadImage', token, workId, fileName: file.name, mimeType: file.type, fileBase64 }));
-          })
-      )
-      .catch(() =>
-        Promise.resolve({ success: false, data: null, error: { code: 'FILE_READ_ERROR', message: 'تعذرت قراءة الملف.' } })
+    const body = JSON.stringify({ action: 'uploadImage', token, workId, fileName: file.name, mimeType: file.type, fileBase64 });
+    try {
+      const response = await withTimeout(
+        fetch(baseUrl, { method: 'POST', body, headers: { 'Content-Type': 'text/plain;charset=utf-8' }, redirect: 'follow' }),
+        UPLOAD_TIMEOUT_MS
       );
+      const json = await response.json();
+      clearInterval(progressTimer);
+      tick(100);
+      return normalize(json);
+    } catch (err) {
+      clearInterval(progressTimer);
+      return networkErrorResult(err);
+    }
   }
 
   // ---- Admin: dashboard stats -------------------------------------------
