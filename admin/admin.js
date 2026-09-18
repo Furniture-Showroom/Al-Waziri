@@ -281,40 +281,110 @@ function setupDashboardPage() {
     const toggleBtn = Utils.el('button', { class: 'btn btn-outline btn-sm', type: 'button', text: 'الصور' });
     const imagesPanel = Utils.el('div', { class: 'upload-list', hidden: true });
     let imagesLoaded = false;
+
+    function buildImageRow(image) {
+      const imgRow = Utils.el('div', { class: 'upload-item' }, [
+        Utils.el('img', { src: image.url, alt: '', loading: 'lazy', decoding: 'async' }),
+        Utils.el('div', { class: 'upload-item-info', text: 'صورة' }),
+      ]);
+      const removeBtn = Utils.el('button', { class: 'btn btn-sm upload-item-retry', type: 'button', text: 'حذف' });
+      removeBtn.addEventListener('click', () => {
+        askConfirm('هل تريد حذف هذه الصورة؟', async () => {
+          const delResult = await Api.deleteImage(image.id);
+          if (handleAuthFailure(delResult)) return;
+          if (!delResult.success) {
+            Utils.toast(delResult.error.message || 'تعذر حذف الصورة.', 'error');
+            return;
+          }
+          imgRow.remove();
+          Utils.toast('تم حذف الصورة.', 'success');
+          Api.invalidateReadCache();
+          work.imageCount = Math.max(0, (work.imageCount || 1) - 1);
+          metaCountText.textContent = ` · ${work.imageCount} صورة · `;
+          loadStats();
+        });
+      });
+      imgRow.appendChild(removeBtn);
+      return imgRow;
+    }
+
+    async function loadImagesIntoPanel() {
+      if (imagesLoaded) return true;
+      const result = await Api.getWork(work.id);
+      if (handleAuthFailure(result)) return false;
+      if (!result.success) {
+        imagesPanel.appendChild(Utils.el('p', { class: 'field-error', text: 'تعذر تحميل الصور.' }));
+        return false;
+      }
+      imagesLoaded = true;
+      (result.data.images || []).forEach((image) => imagesPanel.appendChild(buildImageRow(image)));
+      return true;
+    }
+
     toggleBtn.addEventListener('click', async () => {
       imagesPanel.hidden = !imagesPanel.hidden;
-      if (!imagesPanel.hidden && !imagesLoaded) {
-        imagesLoaded = true;
-        const result = await Api.getWork(work.id);
+      if (!imagesPanel.hidden) await loadImagesIntoPanel();
+    });
+
+    // "Add more photos to this same album" — the fix for photos ending up
+    // as separate works: this appends into the SAME work, no new album.
+    const addPhotosInput = Utils.el('input', {
+      type: 'file',
+      accept: SITE_CONFIG.upload.allowedMimeTypes.join(','),
+      multiple: true,
+      style: 'display:none;',
+    });
+    const addPhotosBtn = Utils.el('button', { class: 'btn btn-outline btn-sm', type: 'button', text: 'إضافة صور' });
+    addPhotosBtn.addEventListener('click', () => addPhotosInput.click());
+    addPhotosInput.addEventListener('change', async () => {
+      const files = Array.from(addPhotosInput.files);
+      addPhotosInput.value = '';
+      if (!files.length) return;
+
+      imagesPanel.hidden = false;
+      await loadImagesIntoPanel();
+
+      const { countOk, countReason, perFile } = Validation.validateImageBatch(files, work.imageCount || 0);
+      if (!countOk) {
+        Utils.toast(countReason, 'error');
+        return;
+      }
+
+      for (const { file, valid, reason } of perFile) {
+        if (!valid) {
+          Utils.toast(`${file.name}: ${reason}`, 'error');
+          continue;
+        }
+        const progressBar = Utils.el('div', { class: 'upload-progress-bar' });
+        const statusText = Utils.el('span', { class: 'upload-item-status', text: 'جارٍ الرفع…' });
+        const pendingRow = Utils.el('div', { class: 'upload-item' }, [
+          Utils.el('div', { class: 'upload-item-info' }, [
+            Utils.el('div', { class: 'upload-item-name', text: file.name }),
+            Utils.el('div', { class: 'upload-progress' }, progressBar),
+          ]),
+          statusText,
+        ]);
+        imagesPanel.appendChild(pendingRow);
+
+        // eslint-disable-next-line no-await-in-loop
+        const result = await Api.uploadImageWithProgress(work.id, file, (pct) => { progressBar.style.width = `${pct}%`; });
         if (handleAuthFailure(result)) return;
         if (!result.success) {
-          imagesPanel.appendChild(Utils.el('p', { class: 'field-error', text: 'تعذر تحميل الصور.' }));
-          return;
+          statusText.textContent = 'فشل';
+          statusText.style.color = 'var(--color-danger)';
+          continue;
         }
-        (result.data.images || []).forEach((image) => {
-          const row = Utils.el('div', { class: 'upload-item' }, [
-            Utils.el('img', { src: image.url, alt: '', loading: 'lazy', decoding: 'async' }),
-            Utils.el('div', { class: 'upload-item-info', text: 'صورة' }),
-          ]);
-          const removeBtn = Utils.el('button', { class: 'btn btn-sm upload-item-retry', type: 'button', text: 'حذف' });
-          removeBtn.addEventListener('click', () => {
-            askConfirm('هل تريد حذف هذه الصورة؟', async () => {
-              const delResult = await Api.deleteImage(image.id);
-              if (handleAuthFailure(delResult)) return;
-              if (!delResult.success) {
-                Utils.toast(delResult.error.message || 'تعذر حذف الصورة.', 'error');
-                return;
-              }
-              row.remove();
-              Utils.toast('تم حذف الصورة.', 'success');
-              Api.invalidateReadCache();
-              loadStats();
-            });
-          });
-          row.appendChild(removeBtn);
-          imagesPanel.appendChild(row);
-        });
+        pendingRow.replaceWith(buildImageRow({ id: result.data.imageId, url: result.data.url }));
+        work.imageCount = (work.imageCount || 0) + 1;
+        metaCountText.textContent = ` · ${work.imageCount} صورة · `;
+        if (!work.coverImageUrl) {
+          work.coverImageUrl = result.data.url;
+          coverImg.src = result.data.url;
+        }
       }
+
+      Api.invalidateReadCache();
+      loadStats();
     });
 
     const editBtn = Utils.el('button', { class: 'btn btn-outline btn-sm', type: 'button', text: 'تعديل' });
@@ -340,15 +410,17 @@ function setupDashboardPage() {
       Utils.el('div', { class: 'work-row-info' }, [
         Utils.el('div', { class: 'work-row-title', text: work.title }),
         Utils.el('div', { class: 'work-row-meta' }, [
-          Utils.el('span', { text: categoryLabel(work.category) }),
-          ` · ${work.imageCount || 0} صورة · `,
+          Utils.el('span', { class: 'meta-category', text: categoryLabel(work.category) }),
+          Utils.el('span', { class: 'meta-count', text: ` · ${work.imageCount || 0} صورة · ` }),
           Utils.el('span', { class: `badge ${work.active ? 'badge-active' : 'badge-inactive'}`, text: work.active ? 'منشور' : 'غير منشور' }),
         ]),
       ]),
-      Utils.el('div', { class: 'work-row-actions' }, [editBtn, toggleBtn, deleteBtn]),
+      Utils.el('div', { class: 'work-row-actions' }, [editBtn, toggleBtn, addPhotosBtn, addPhotosInput, deleteBtn]),
     ]);
     const titleEl = Utils.qs('.work-row-title', row);
-    const metaCategoryText = Utils.qs('.work-row-meta span', row);
+    const metaCategoryText = Utils.qs('.meta-category', row);
+    const metaCountText = Utils.qs('.meta-count', row);
+    const coverImg = Utils.qs('img', row);
 
     const wrapper = Utils.el('div', {}, [row, editPanel, imagesPanel]);
     return wrapper;

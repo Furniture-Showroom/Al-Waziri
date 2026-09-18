@@ -7,26 +7,10 @@
 'use strict';
 
 (function initPublicSite() {
-  const CATEGORY_ICONS = {
-    bedrooms: '<path d="M3 18v-6a2 2 0 012-2h14a2 2 0 012 2v6M3 18v2M21 18v2M5 13V9a2 2 0 012-2h2a2 2 0 012 2v1m2-1a2 2 0 012-2h2a2 2 0 012 2v4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
-    kids: '<circle cx="12" cy="7" r="3" stroke="currentColor" stroke-width="1.6" fill="none"/><path d="M5 21v-3a4 4 0 014-4h6a4 4 0 014 4v3" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/>',
-    reception: '<path d="M4 13a2 2 0 012-2h12a2 2 0 012 2v4H4v-4z" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/><path d="M4 17v3M20 17v3M6 11V8a2 2 0 012-2h8a2 2 0 012 2v3" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/>',
-    dining: '<ellipse cx="12" cy="8" rx="8" ry="2.4" stroke="currentColor" stroke-width="1.6" fill="none"/><path d="M4 8v3c0 1.3 3.6 2.4 8 2.4s8-1.1 8-2.4V8M12 13.4V21M8 21h8" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/>',
-    corners: '<path d="M4 20V9a2 2 0 012-2h3v9M4 20h16M9 16h11v-3a2 2 0 00-2-2h-4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/>',
-    kitchens: '<path d="M4 8h16M6 8v10a2 2 0 002 2h8a2 2 0 002-2V8M9 8V6a1 1 0 011-1h4a1 1 0 011 1v2" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/><path d="M9 13h6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>',
-    'home-furniture': '<path d="M4 21V10l8-6 8 6v11M9 21v-6h6v6" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/>',
-  };
-
   const state = {
     activeCategory: 'all',
     works: [],
   };
-
-  function icon(markup, size = 24) {
-    const span = document.createElement('span');
-    span.innerHTML = `<svg class="icon" viewBox="0 0 24 24" width="${size}" height="${size}" aria-hidden="true">${markup}</svg>`;
-    return span.firstChild;
-  }
 
   // ---- Header / mobile nav ------------------------------------------
   function setupNav() {
@@ -58,41 +42,6 @@
     Utils.qsa('[data-text="business-name"]').forEach((el) => { el.textContent = SITE_CONFIG.businessName; });
   }
 
-  // ---- Categories grid --------------------------------------------------
-  function renderCategories() {
-    const grid = Utils.qs('#category-grid');
-    if (!grid) return;
-    grid.innerHTML = '';
-    SITE_CONFIG.categories.forEach((cat) => {
-      const card = Utils.el(
-        'button',
-        {
-          type: 'button',
-          class: 'category-card',
-          'data-category': cat.id,
-          onClick: () => selectCategory(cat.id, true),
-        },
-        [
-          Utils.el('span', { class: 'category-card-icon' }, icon(CATEGORY_ICONS[cat.id] || '', 28)),
-          Utils.el('span', { class: 'category-card-label', text: cat.label }),
-          Utils.el('span', { class: 'category-card-count', 'data-count-for': cat.id, text: '' }),
-        ]
-      );
-      grid.appendChild(card);
-    });
-  }
-
-  function updateCategoryCounts() {
-    const counts = state.works.reduce((acc, work) => {
-      acc[work.category] = (acc[work.category] || 0) + 1;
-      return acc;
-    }, {});
-    Utils.qsa('[data-count-for]').forEach((el) => {
-      const count = counts[el.dataset.countFor] || 0;
-      el.textContent = count ? `${count} عمل` : '';
-    });
-  }
-
   // ---- Filter pills -------------------------------------------------
   function renderFilterPills() {
     const container = Utils.qs('#filter-pills');
@@ -118,9 +67,6 @@
     state.activeCategory = categoryId;
     Utils.qsa('.filter-pill').forEach((pill) => {
       pill.classList.toggle('is-active', pill.dataset.category === categoryId);
-    });
-    Utils.qsa('.category-card').forEach((card) => {
-      card.classList.toggle('is-active', card.dataset.category === categoryId);
     });
     renderCarouselCards();
     if (scrollToWorks) {
@@ -221,7 +167,6 @@
       return;
     }
     state.works = result.data || [];
-    updateCategoryCounts();
     renderCarouselCards();
   }
 
@@ -234,7 +179,6 @@
   document.addEventListener('DOMContentLoaded', () => {
     setupNav();
     setupContactLinks();
-    renderCategories();
     renderFilterPills();
     setupRetry();
     loadWorks();
