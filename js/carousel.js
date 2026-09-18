@@ -28,7 +28,6 @@ const Carousel = (() => {
     let cardCount = 0;
     let listeners = { activate: [] };
     let isPointerDown = false;
-    let dragMoved = false;
     let dragStartX = 0;
     let dragStartScroll = 0;
 
@@ -152,41 +151,42 @@ const Carousel = (() => {
     viewport.addEventListener('scroll', throttledScroll, { passive: true });
 
     // Pointer drag-to-scroll for desktop mice/trackpads (touch already
-    // works natively via scroll-snap + overflow-x).
-    viewport.addEventListener('pointerdown', (event) => {
-      if (event.pointerType === 'touch') return; // native touch scrolling handles this
-      isPointerDown = true;
-      dragMoved = false;
-      dragStartX = event.clientX;
-      dragStartScroll = viewport.scrollLeft;
-      viewport.classList.add('is-dragging');
-      viewport.setPointerCapture(event.pointerId);
-    });
-    viewport.addEventListener('pointermove', (event) => {
+    // works natively via scroll-snap + overflow-x, so it's skipped here).
+    //
+    // Deliberately NOT using setPointerCapture: capturing the pointer on
+    // `viewport` can interfere with the browser's own click dispatch on
+    // the card underneath, which was silently breaking "click a work to
+    // open its photos" on desktop. Tracking movement via listeners on
+    // `document` (added only while a drag is in progress) gives the same
+    // "keep tracking even if the cursor leaves the viewport" behavior
+    // without touching click delivery at all — a plain click (no
+    // movement) reaches the card's onClick exactly as any other click
+    // would, and a real drag naturally does not fire a click, per how
+    // browsers dispatch click events (mouseup must land without
+    // meaningful movement from mousedown).
+    function handlePointerMove(event) {
       if (!isPointerDown) return;
       const delta = event.clientX - dragStartX;
-      if (Math.abs(delta) > 3) dragMoved = true;
       viewport.scrollLeft = dragStartScroll - delta;
-    });
-    function endDrag(event) {
+    }
+    function endDrag() {
       if (!isPointerDown) return;
       isPointerDown = false;
       viewport.classList.remove('is-dragging');
+      document.removeEventListener('pointermove', handlePointerMove);
+      document.removeEventListener('pointerup', endDrag);
+      document.removeEventListener('pointercancel', endDrag);
       scrollToIndex(detectActiveIndex());
-      if (dragMoved && event) {
-        // Suppress the click that would otherwise fire on the card after a drag.
-        const suppressClick = (clickEvent) => {
-          clickEvent.stopPropagation();
-          clickEvent.preventDefault();
-          viewport.removeEventListener('click', suppressClick, true);
-        };
-        viewport.addEventListener('click', suppressClick, true);
-      }
     }
-    viewport.addEventListener('pointerup', endDrag);
-    viewport.addEventListener('pointercancel', endDrag);
-    viewport.addEventListener('pointerleave', () => {
-      if (isPointerDown) endDrag(null);
+    viewport.addEventListener('pointerdown', (event) => {
+      if (event.pointerType === 'touch') return; // native touch scrolling handles this
+      isPointerDown = true;
+      dragStartX = event.clientX;
+      dragStartScroll = viewport.scrollLeft;
+      viewport.classList.add('is-dragging');
+      document.addEventListener('pointermove', handlePointerMove);
+      document.addEventListener('pointerup', endDrag);
+      document.addEventListener('pointercancel', endDrag);
     });
 
     if (prevBtn) prevBtn.addEventListener('click', prev);
