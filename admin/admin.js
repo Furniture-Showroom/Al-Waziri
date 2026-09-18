@@ -284,7 +284,7 @@ function setupDashboardPage() {
 
     function buildImageRow(image) {
       const imgRow = Utils.el('div', { class: 'upload-item' }, [
-        Utils.el('img', { src: image.url, alt: '', loading: 'lazy', decoding: 'async' }),
+        Utils.el('img', { src: image.thumbUrl || image.url, alt: '', loading: 'lazy', decoding: 'async' }),
         Utils.el('div', { class: 'upload-item-info', text: 'صورة' }),
       ]);
       const removeBtn = Utils.el('button', { class: 'btn btn-sm upload-item-retry', type: 'button', text: 'حذف' });
@@ -374,12 +374,12 @@ function setupDashboardPage() {
           statusText.style.color = 'var(--color-danger)';
           continue;
         }
-        pendingRow.replaceWith(buildImageRow({ id: result.data.imageId, url: result.data.url }));
+        pendingRow.replaceWith(buildImageRow({ id: result.data.imageId, url: result.data.url, thumbUrl: result.data.thumbUrl }));
         work.imageCount = (work.imageCount || 0) + 1;
         metaCountText.textContent = ` · ${work.imageCount} صورة · `;
         if (!work.coverImageUrl) {
-          work.coverImageUrl = result.data.url;
-          coverImg.src = result.data.url;
+          work.coverImageUrl = result.data.thumbUrl || result.data.url;
+          coverImg.src = work.coverImageUrl;
         }
       }
 

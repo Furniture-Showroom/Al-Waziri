@@ -45,6 +45,11 @@
 
 <link rel="stylesheet" href="./css/style.css">
 
+<!-- The hero banner is this page's largest visible image (LCP candidate) —
+     preload it so the browser starts fetching it immediately instead of
+     waiting for the parser to reach the <img> tag lower in the HTML. -->
+<link rel="preload" as="image" href="./assets/banner.webp" type="image/webp">
+
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -120,7 +125,7 @@
       <div class="hero-visual">
         <picture>
           <source srcset="./assets/banner.webp" type="image/webp">
-          <img src="./assets/banner.png" alt="معرض الحاج حماده نافع وزيري للأثاث" width="1200" height="480" loading="eager" decoding="async">
+          <img src="./assets/banner.png" alt="معرض الحاج حماده نافع وزيري للأثاث" width="1200" height="480" loading="eager" decoding="async" fetchpriority="high">
         </picture>
       </div>
     </div>

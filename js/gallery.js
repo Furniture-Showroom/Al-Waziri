@@ -161,7 +161,7 @@ const Gallery = (() => {
     thumbsEl.innerHTML = '';
     work.images.forEach((image, index) => {
       const thumb = Utils.el('img', {
-        src: image.url,
+        src: image.thumbUrl || image.url, // small ImgBB thumbnail, not the full photo
         alt: '',
         loading: 'lazy',
         decoding: 'async',
